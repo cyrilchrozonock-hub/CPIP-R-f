@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assistant CPIP — SPIP de la Moselle</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f1117;
+    color: #e0ddd8;
+    font-family: 'Georgia', serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: #13151c;
+    border-bottom: 1px solid #252830;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4a90d9; flex-shrink: 0; }
+  header h1 { font-size: 12px; letter-spacing: .15em; text-transform: uppercase; color: #7a7a8a; font-weight: normal; }
+  .badge { margin-left: auto; font-size: 11px; color: #4a9; background: #1a2a1a; padding: 3px 12px; border-radius: 20px; border: 1px solid #2a4a2a; }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+  .grid { display: grid; gap: 24px; }
+  .grid.two-col { grid-template-columns: 1fr 1fr; }
+
+  /* PANELS */
+  .panel { display: flex; flex-direction: column; gap: 16px; }
+
+  /* LABELS */
+  label.field-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: #5a5a6a;
+    margin-bottom: 6px;
+  }
+  .required { color: #c44; }
+  .optional { color: #333; }
+
+  /* SELECTORS */
+  .selector-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sel-btn {
+    padding: 7px 14px;
+    border-radius: 5px;
+    border: 1px solid #2a2d35;
+    background: #1a1c24;
+    color: #7a7a8a;
+    font-size: 12px;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .sel-btn:hover { border-color: #4a90d9; color: #c0bfba; }
+  .sel-btn.active { background: #1a2a3a; border-color: #4a90d9; color: #4a90d9; }
+  .sel-btn.active-green { background: #1a2a1a; border-color: #4a9; color: #4a9; }
+  .sel-btn.active-orange { background: #2a1a0a; border-color: #c84; color: #c84; }
+
+  /* CHECKBOXES MESURE */
+  .check-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .check-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid #2a2d35;
+    border-radius: 5px;
+    background: #1a1c24;
+    cursor: pointer;
+    font-size: 12px;
+    color: #7a7a8a;
+    transition: all .15s;
+    user-select: none;
+  }
+  .check-item:hover { border-color: #3a3d45; color: #aaa; }
+  .check-item.checked { border-color: #4a9; background: #1a2a1a; color: #4a9; }
+  .check-item input { display: none; }
+
+  /* NIVEAU INTERVENTION */
+  .niveau-row { display: flex; gap: 8px; }
+  .niveau-btn {
+    flex: 1; padding: 8px; text-align: center;
+    border: 1px solid #2a2d35; border-radius: 5px;
+    background: #1a1c24; color: #7a7a8a;
+    font-size: 11px; font-family: 'Georgia', serif;
+    cursor: pointer; transition: all .15s;
+  }
+  .niveau-btn:hover { border-color: #3a3d45; }
+  .niveau-btn.active { background: #1a2030; border-color: #5a8; color: #5a8; }
+
+  /* TEXTAREA */
+  textarea {
+    width: 100%;
+    background: #1a1c24;
+    border: 1px solid #252830;
+    border-radius: 6px;
+    color: #c0beba;
+    font-family: 'Georgia', serif;
+    font-size: 13px;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.65;
+    transition: border-color .2s;
+  }
+  textarea:focus { border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,.08); }
+  textarea.error { border-color: #c44; }
+
+  /* PHOTO ZONE */
+  .photo-zone {
+    border: 1px dashed #353840;
+    border-radius: 6px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    background: #141620;
+    color: #4a4a5a;
+    font-size: 12px;
+    transition: all .2s;
+  }
+  .photo-zone:hover { border-color: #4a90d9; color: #4a90d9; }
+  .photo-zone span { font-size: 18px; display: block; margin-bottom: 6px; }
+  .previews { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .preview-wrap { position: relative; }
+  .preview-wrap img { width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #2a2d35; display: block; }
+  .preview-del {
+    position: absolute; top: -6px; right: -6px;
+    background: #c44; color: #fff; border: none;
+    border-radius: 50%; width: 18px; height: 18px;
+    font-size: 11px; cursor: pointer; line-height: 18px;
+    text-align: center; padding: 0;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 13px 20px; border: none; border-radius: 6px;
+    font-family: 'Georgia', serif; font-size: 13px;
+    cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary { background: #4a90d9; color: #fff; }
+  .btn-primary:hover { background: #5a9de6; }
+  .btn-primary:disabled { background: #252830; color: #444; cursor: not-allowed; }
+  .btn-secondary { background: transparent; color: #555; border: 1px solid #2a2d35; font-size: 12px; padding: 9px 16px; }
+  .btn-secondary:hover { border-color: #3a3d45; color: #888; }
+  .btn-extract { background: #1a2a1a; color: #4a9; border: 1px solid #2a4a2a; font-size: 12px; padding: 9px 16px; }
+  .btn-extract:hover { background: #1e311e; }
+  .btn-extract:disabled { background: #252830; color: #444; cursor: not-allowed; border-color: #252830; }
+  .btn-copy { background: #1a2a3a; color: #4a90d9; border: 1px solid #2a3a4a; font-size: 11px; padding: 6px 14px; border-radius: 4px; }
+  .btn-copy.copied { background: #1a3a1a; color: #4a9; border-color: #2a4a2a; }
+
+  /* SPINNER */
+  .spinner {
+    display: inline-block; width: 13px; height: 13px;
+    border: 2px solid #333; border-top-color: #888;
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* RESULT */
+  .result-header { display: flex; justify-content: space-between; align-items: center; }
+  .result-label { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #4a9; }
+  .result-box {
+    background: #1a1c24;
+    border: 1px solid #2a4a2a;
+    border-radius: 6px;
+    padding: 22px;
+    font-size: 13px;
+    line-height: 1.85;
+    color: #c0beba;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    max-height: 680px;
+    font-family: 'Georgia', serif;
+  }
+
+  /* SECTION MARKERS in result */
+  .section-tag {
+    font-size: 9px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #3a4a3a;
+    display: block;
+    margin-top: 14px;
+    margin-bottom: 2px;
+  }
+
+  /* ERROR */
+  .error-msg { color: #c44; font-size: 12px; margin-top: 6px; }
+
+  /* HINT */
+  .hint { font-size: 11px; color: #3a3a4a; font-style: italic; text-align: center; margin-top: 4px; }
+
+  /* SECTION DIVIDER */
+  .divider { border: none; border-top: 1px solid #1e2028; margin: 4px 0; }
+
+  /* RESPONSIVE */
+  @media (max-width: 720px) {
+    .grid.two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <h1>Assistant CPIP — SPIP de la Moselle</h1>
+  <span class="badge">PRISME</span>
+</header>
+
+<div class="container">
+  <div class="grid" id="main-grid">
+
+    <!-- COLONNE GAUCHE -->
+    <div class="panel" id="left-panel">
+
+      <!-- TYPE DE DOCUMENT -->
+      <div>
+        <label class="field-label">Type de document <span class="required">*</span></label>
+        <div class="selector-row" id="type-doc-row">
+          <button class="sel-btn active" data-type="CRE" onclick="selectType(this)">CRE</button>
+          <button class="sel-btn" data-type="RIE" onclick="selectType(this)">RIE</button>
+          <button class="sel-btn" data-type="NOTE" onclick="selectType(this)">Note ponctuelle</button>
+          <button class="sel-btn" data-type="RFM" onclick="selectType(this)">RFM</button>
+          <button class="sel-btn" data-type="AUDIENCE" onclick="selectType(this)">Rapport d'audience</button>
+          <button class="sel-btn" data-type="RAP72315" onclick="selectType(this)">723-15</button>
+        </div>
+      </div>
+
+      <!-- TYPE DE MESURE -->
+      <div>
+        <label class="field-label">Type de mesure</label>
+        <div class="check-row" id="mesure-row">
+          <label class="check-item" onclick="toggleMesure(this)">
+            <input type="checkbox" value="Sursis probatoire"> Sursis probatoire
+          </label>
+          <label class="check-item" onclick="toggleMesure(this)">
+            <input type="checkbox" value="DDSE"> DDSE
+          </label>
+          <label class="check-item" onclick="toggleMesure(this)">
+            <input type="checkbox" value="Contrôle judiciaire"> Contrôle judiciaire
+          </label>
+          <label class="check-item" onclick="toggleMesure(this)">
+            <input type="checkbox" value="Suivi socio-judiciaire"> SSJ
+          </label>
+          <label class="check-item" onclick="toggleMesure(this)">
+            <input type="checkbox" value="TIG"> TIG
+          </label>
+          <label class="check-item" onclick="toggleMesure(this)">
+            <input type="checkbox" value="Autre"> Autre
+          </label>
+        </div>
+      </div>
+
+      <!-- NIVEAU D'INTERVENTION (RIE seulement) -->
+      <div id="niveau-section" style="display:none;">
+        <label class="field-label">Niveau d'intervention</label>
+        <div class="niveau-row">
+          <button class="niveau-btn" data-niveau="minimal" onclick="selectNiveau(this)">Minimal</button>
+          <button class="niveau-btn active" data-niveau="régulier" onclick="selectNiveau(this)">Régulier</button>
+          <button class="niveau-btn" data-niveau="intensif" onclick="selectNiveau(this)">Intensif</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- PHOTOS -->
+      <div>
+        <label class="field-label">Photos du dossier PRISME <span class="optional">(optionnel)</span></label>
+        <div class="photo-zone" onclick="document.getElementById('file-input').click()">
+          <span>📎</span>
+          Ajouter des photos ou PDF — écran PRISME, jugement, pièces du dossier
+        </div>
+        <input type="file" id="file-input" accept="image/*,application/pdf" multiple style="display:none" onchange="handlePhotos(this)">
+        <div class="previews" id="previews"></div>
+        <button class="btn btn-extract" id="btn-extract" style="display:none;margin-top:10px;width:100%;" onclick="extraireContexte()">
+          ↓ Extraire les infos du dossier
+        </button>
+      </div>
+
+      <!-- CONTEXTE -->
+      <div>
+        <label class="field-label">Contexte dossier <span class="optional">(extrait ou saisi)</span></label>
+        <textarea id="contexte" rows="5" placeholder="Nom, prénom, mesure, dates, infractions, obligations... Les infos extraites des photos apparaîtront ici."></textarea>
+      </div>
+
+      <!-- TRANSCRIPTION -->
+      <div>
+        <label class="field-label">Transcription / notes d'entretien <span class="required">*</span></label>
+        <textarea id="transcription" rows="10" placeholder="Colle ici la transcription brute (Google Recorder, Whisper) ou tes notes d'entretien..."></textarea>
+        <p class="error-msg" id="error-msg" style="display:none;"></p>
+      </div>
+
+      <!-- BOUTONS -->
+      <button class="btn btn-primary" id="btn-generer" onclick="generer()">
+        Générer
+      </button>
+      <button class="btn btn-secondary" id="btn-reset" onclick="reset()" style="display:none;">
+        Nouvel entretien
+      </button>
+
+    </div>
+
+    <!-- COLONNE DROITE — résultat -->
+    <div class="panel" id="right-panel" style="display:none;">
+      <div class="result-header">
+        <span class="result-label" id="result-label">✓ Document généré</span>
+        <button class="btn btn-copy" id="btn-copy" onclick="copier()">Copier</button>
+      </div>
+      <div class="result-box" id="result-box"></div>
+      <p class="hint">Relire avant copie dans PRISME</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentType = 'CRE';
+let currentNiveau = 'régulier';
+let photos = []; // [{data, type}]
+
+// ─── SYSTEM PROMPTS ──────────────────────────────────────────────────────────
+const PROMPTS = {
+
+CRE: `Tu es un assistant spécialisé dans la rédaction de Comptes Rendus d'Entretien (CRE) pour les Conseillers Pénitentiaires d'Insertion et de Probation (CPIP) au format PRISME.
+
+RÈGLES ABSOLUES :
+- Titre centré en gras : "Compte Rendu d'Entretien"
+- Prose justifiée et fluide, JAMAIS de listes à puces
+- Toujours "nous" (jamais "le CPIP", jamais "je")
+- "Monsieur" ou "Madame" en toutes lettres, jamais abrégé
+- Nom complet de l'intéressé : 1 à 2 occurrences maximum ; ensuite : "Monsieur", "l'intéressé", "le probationnaire"
+- Conditionnel pour les informations déclarées non vérifiées ; indicatif pour les faits documentés
+- Dates au format JJ/MM/AA
+- Ton professionnel, institutionnel, concis, sans remplissage ni formules creuses
+
+STRUCTURE :
+1. En-tête : date de l'entretien, type de mesure, durée si mentionnée
+2. Corps en prose : situation familiale, professionnelle, hébergement, santé, respect des obligations, axes de travail abordés
+3. Conclusion : synthèse + suite (prochain RDV, démarches, signalement éventuel)
+
+Génère uniquement le texte du CRE, prêt à copier dans PRISME. Aucun commentaire, aucune explication.`,
+
+RIE: (niveau) => `Tu es un assistant spécialisé dans la rédaction de Rapports d'Investigations et d'Évaluations (RIE) pour les Conseillers Pénitentiaires d'Insertion et de Probation (CPIP) au format PRISME.
+
+RÈGLES ABSOLUES :
+- Titre centré en gras : "Rapport d'Investigation et d'Évaluation"
+- Prose justifiée et fluide, JAMAIS de listes à puces dans le corps
+- Toujours "nous" (jamais "le CPIP", jamais "je")
+- "Monsieur" ou "Madame" en toutes lettres, jamais abrégé
+- Nom complet : 1 à 2 occurrences maximum ; ensuite "Monsieur", "l'intéressé", "le probationnaire"
+- Conditionnel pour les informations déclarées non vérifiées ; indicatif pour les faits documentés
+- Dates au format JJ/MM/AA
+- Ton professionnel, institutionnel, analytique, sans remplissage
+
+STRUCTURE EN 12 SECTIONS — rédigées en prose continue sans titres apparents ni numérotation. Chaque section doit être clairement distincte par son contenu mais sans rupture visuelle brutale. Les 12 sections sont :
+
+1. SITUATION FAMILIALE ET ADMINISTRATIVE : état civil, situation maritale, enfants, liens familiaux, situation administrative (nationalité, titre de séjour si pertinent)
+2. HÉBERGEMENT : type de logement, stabilité, conditions, propriétaire/locataire/hébergé
+3. SITUATION PROFESSIONNELLE : emploi, formation, ressources, recherches en cours
+4. SITUATION SANITAIRE : état de santé physique et psychique, suivi médical, addictions, injonctions de soins si applicable
+5. LOISIRS ET ACTIVITÉS : occupation du temps libre, activités, réseau social
+6. PÉRIODE D'OBSERVATION : déroulé du suivi depuis la prise en charge — rédigée en "nous", chronologique, entretiens réalisés, attitude, ponctualité, qualité du lien
+7. FACTEURS DE RISQUE STATIQUES : antécédents judiciaires, âge de début de délinquance, récidive, nature des faits
+8. FACTEURS DE RISQUE DYNAMIQUES : attitudes antisociales, impulsivité, consommations problématiques, instabilité, entourage criminogène
+9. FACTEURS DE PROTECTION : ressources personnelles, soutien familial, emploi stable, engagement dans le suivi, capacités de remise en question
+10. INDICES DE RÉCEPTIVITÉ : stade de changement selon Prochaska-DiClemente (pré-contemplation, contemplation, préparation, action, maintien), motivation déclarée vs observée, leviers mobilisables
+11. NIVEAU D'INTERVENTION : "${niveau}" — justification clinique en prose (charge de suivi, intensité des besoins, risque évalué)
+12. PLAN D'ACCOMPAGNEMENT : maximum 2 axes prioritaires, objectifs opérationnels, modalités de suivi
+
+Après le Plan d'accompagnement, rédige une FORMULE CONCLUSIVE en 2-3 phrases : synthèse de l'évaluation globale, positionnement du CPIP, recommandation à la juridiction si pertinent.
+
+Si la mesure est un Suivi Socio-Judiciaire (SSJ) : intègre les éléments spécifiques — injonction de soins, expertise psychiatrique, CLCR si mentionné, articulation avec le médecin coordonnateur.
+
+Génère uniquement le texte du RIE, prêt à copier dans PRISME. Aucun commentaire, aucune explication.`,
+
+NOTE: `Tu es un assistant spécialisé dans la rédaction de Notes Ponctuelles de Situation pour les CPIP au format PRISME.
+
+RÈGLES ABSOLUES :
+- Titre centré en gras : "Note Ponctuelle de Situation"
+- Prose justifiée et fluide, JAMAIS de listes à puces
+- Toujours "nous", jamais "le CPIP" ni "je"
+- "Monsieur" ou "Madame" en toutes lettres
+- Nom complet : 1-2 occurrences max
+- Conditionnel pour déclaré, indicatif pour documenté
+- Dates JJ/MM/AA
+- Concis, factuel, sans remplissage
+
+STRUCTURE :
+1. Objet de la note (pourquoi elle est rédigée)
+2. Éléments de situation actuels pertinents
+3. Analyse et positionnement du CPIP
+4. Suite proposée ou demande à la juridiction
+
+Génère uniquement le texte de la note. Aucun commentaire.`,
+
+RFM: `Tu es un assistant spécialisé dans la rédaction de Rapports de Fin de Mesure (RFM) pour les CPIP au format PRISME.
+
+RÈGLES ABSOLUES :
+- Titre centré en gras : "Rapport de Fin de Mesure"
+- Prose justifiée et fluide, JAMAIS de listes à puces
+- Toujours "nous", jamais "le CPIP" ni "je"
+- "Monsieur" ou "Madame" en toutes lettres
+- Nom complet : 1-2 occurrences max
+- Conditionnel pour déclaré, indicatif pour documenté
+- Dates JJ/MM/AA
+
+STRUCTURE :
+1. Rappel de la mesure (nature, durée, juridiction)
+2. Déroulé du suivi (chronologie, entretiens, incidents éventuels)
+3. Bilan des axes travaillés et résultats observés
+4. Évaluation du risque résiduel
+5. Conclusion et avis du CPIP sur la fin de mesure
+
+Génère uniquement le texte du RFM. Aucun commentaire.`,
+
+AUDIENCE: `Tu es un assistant spécialisé dans la rédaction de Rapports d'Audience pour les CPIP au format PRISME.
+
+RÈGLES ABSOLUES :
+- Titre centré en gras : "Rapport pour Audience"
+- Prose justifiée et fluide, JAMAIS de listes à puces
+- Toujours "nous", jamais "le CPIP" ni "je"
+- "Monsieur" ou "Madame" en toutes lettres
+- Nom complet : 1-2 occurrences max
+- Conditionnel pour déclaré, indicatif pour documenté
+- Dates JJ/MM/AA
+- Concis, orienté décision judiciaire
+
+STRUCTURE :
+1. Rappel de la situation pénale et de la mesure en cours
+2. Éléments de situation actuels (emploi, hébergement, santé, liens familiaux)
+3. Déroulé du suivi et attitude dans la mesure
+4. Avis motivé du CPIP sur la requête ou l'objet de l'audience
+5. Proposition concrète à la juridiction
+
+Génère uniquement le texte du rapport. Aucun commentaire.`,
+
+RAP72315: `Tu es un assistant spécialisé dans la rédaction de Rapports d'aménagement de peine (article 723-15 CPP) pour les CPIP au format PRISME.
+
+RÈGLES ABSOLUES :
+- Titre centré en gras : "Rapport aménagement de peine 723-15"
+- Prose justifiée et fluide, JAMAIS de listes à puces
+- Toujours "nous", jamais "le CPIP" ni "je"
+- "Monsieur" ou "Madame" en toutes lettres, jamais abrégé
+- Nom complet de l'intéressé(e) : 1 à 2 occurrences maximum ; ensuite "Monsieur/Madame", "l'intéressé(e)", "la personne condamnée"
+- Conditionnel pour les informations déclarées non vérifiées ; indicatif pour les faits documentés
+- Dates au format JJ/MM/AA
+- Ton professionnel, institutionnel, orienté décision judiciaire, sans remplissage
+
+STRUCTURE EN 6 BLOCS — rédigés en prose continue :
+
+1. ÉTAT CIVIL DE LA PPSMJ : identité complète (nom, prénom, date et lieu de naissance, nationalité), situation familiale résumée
+
+2. SITUATION PÉNALE ACTUELLE : nature de la condamnation, juridiction, date du jugement, quantum de peine prononcé, reliquat à exécuter, nature de l'infraction
+
+3. SITUATION SOCIO-PROFESSIONNELLE : en prose fluide couvrant la situation familiale, professionnelle (emploi/formation/ressources), sanitaire, financière et d'hébergement — éléments factuels et déclarés
+
+4. ANALYSE : évaluation par le CPIP de la faisabilité de la mesure demandée au regard des éléments recueillis — risques identifiés, facteurs de protection, adéquation du projet présenté, dynamique de la personne
+
+5. AVIS DE LA PPSMJ : position exprimée par la personne condamnée sur la mesure sollicitée, ses motivations, son engagement déclaré
+
+6. AVIS DU SPIP : avis motivé et circonstancié du SPIP (favorable / défavorable / réservé) sur la mesure sollicitée — justification au regard des conditions matérielles, de la situation personnelle, du risque de récidive et des garanties présentées. Préciser le type de mesure recommandée si avis favorable (DDSE, LC, PSE, SL...).
+
+Génère uniquement le texte du rapport 723-15, prêt à copier dans PRISME. Aucun commentaire, aucune explication.`
+};
+
+const EXTRACT_PROMPT = `Analyse cette capture d'écran du logiciel PRISME et extrais les informations du dossier.
+
+Extrais uniquement ce qui est clairement visible :
+- Nom et prénom de la personne suivie
+- Date de naissance / âge
+- Type(s) de mesure
+- Durée(s) prononcée(s) et effective(s)
+- Date de début et de fin de mesure
+- Infractions commises avec dates
+- Juridiction et date du jugement
+- Numéro de parquet
+- JAP / CPIP attribués si visibles
+- Obligations particulières si visibles
+
+Format : texte simple et concis, quelques lignes. Ne mentionne pas les éléments non visibles.`;
+
+// ─── SÉLECTEURS ──────────────────────────────────────────────────────────────
+function selectType(btn) {
+  document.querySelectorAll('#type-doc-row .sel-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentType = btn.dataset.type;
+  document.getElementById('niveau-section').style.display = currentType === 'RIE' ? 'block' : 'none';
+}
+
+function toggleMesure(label) {
+  label.classList.toggle('checked');
+  label.querySelector('input').checked = label.classList.contains('checked');
+}
+
+function selectNiveau(btn) {
+  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentNiveau = btn.dataset.niveau;
+}
+
+function getMesures() {
+  return Array.from(document.querySelectorAll('#mesure-row .check-item.checked'))
+    .map(el => el.querySelector('input').value).join(', ');
+}
+
+// ─── PHOTOS ──────────────────────────────────────────────────────────────────
+async function handlePhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  for (const file of files) {
+    const data = await toBase64(file);
+    const isPDF = file.type === 'application/pdf';
+    photos.push({ data, type: file.type || 'image/jpeg', isPDF, name: file.name });
+
+    const wrap = document.createElement('div');
+    wrap.className = 'preview-wrap';
+    const idx = photos.length - 1;
+    if (isPDF) {
+      wrap.innerHTML = `<div style="width:70px;height:70px;border-radius:4px;border:1px solid #2a2d35;background:#1a1c24;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;">
+        <span style="font-size:20px;">📄</span>
+        <span style="font-size:9px;color:#6a6a7a;text-align:center;padding:0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:66px;">${file.name}</span>
+      </div>
+      <button class="preview-del" onclick="removePhoto(${idx}, this.parentNode)">×</button>`;
+    } else {
+      wrap.innerHTML = `<img src="${URL.createObjectURL(file)}">
+        <button class="preview-del" onclick="removePhoto(${idx}, this.parentNode)">×</button>`;
+    }
+    document.getElementById('previews').appendChild(wrap);
+  }
+
+  document.getElementById('btn-extract').style.display = photos.length ? 'flex' : 'none';
+  input.value = '';
+}
+
+function removePhoto(idx, node) {
+  photos.splice(idx, 1);
+  node.remove();
+  document.getElementById('btn-extract').style.display = photos.length ? 'flex' : 'none';
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Lecture échouée'));
+    r.readAsDataURL(file);
+  });
+}
+
+async function extraireContexte() {
+  if (!photos.length) return;
+  const btn = document.getElementById('btn-extract');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Extraction...';
+
+  try {
+    const imageContents = photos.map(p => {
+      if (p.isPDF) {
+        return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: p.data } };
+      }
+      return { type: 'image', source: { type: 'base64', media_type: p.type, data: p.data } };
+    });
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: [...imageContents, { type: 'text', text: EXTRACT_PROMPT }] }]
+      })
+    });
+
+    const data = await resp.json();
+    if (data.content?.[0]?.text) {
+      const ctx = document.getElementById('contexte');
+      ctx.value = ctx.value ? ctx.value + '\n\n---\n' + data.content[0].text : data.content[0].text;
+    }
+  } catch (e) {
+    showError("Erreur lors de l'extraction des photos.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '↓ Extraire les infos du dossier';
+  }
+}
+
+// ─── GÉNÉRATION ──────────────────────────────────────────────────────────────
+async function generer() {
+  const transcription = document.getElementById('transcription').value.trim();
+  const contexte = document.getElementById('contexte').value.trim();
+  const mesures = getMesures();
+
+  if (!transcription) { showError('Colle la transcription ou les notes d\'entretien.'); return; }
+  hideError();
+
+  const btn = document.getElementById('btn-generer');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Génération en cours...';
+
+  let systemPrompt;
+  if (currentType === 'RIE') {
+    systemPrompt = PROMPTS.RIE(currentNiveau);
+  } else {
+    systemPrompt = PROMPTS[currentType];
+  }
+  let userMsg = '';
+  if (mesures) userMsg += `MESURE(S) : ${mesures}\n\n`;
+  if (contexte) userMsg += `CONTEXTE DU DOSSIER :\n${contexte}\n\n`;
+  userMsg += `TRANSCRIPTION / NOTES :\n${transcription}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userMsg }]
+      })
+    });
+
+    const data = await resp.json();
+    if (data.content?.[0]?.text) {
+      afficherResultat(data.content[0].text);
+    } else {
+      showError('Erreur lors de la génération. Réessaie.');
+    }
+  } catch (e) {
+    showError('Erreur de connexion à l\'API Anthropic.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Générer';
+  }
+}
+
+function afficherResultat(texte) {
+  document.getElementById('result-box').textContent = texte;
+  document.getElementById('result-label').textContent = '✓ ' + getLabelType();
+  document.getElementById('right-panel').style.display = 'flex';
+  document.getElementById('btn-reset').style.display = 'flex';
+  document.getElementById('main-grid').classList.add('two-col');
+}
+
+function getLabelType() {
+  const labels = { CRE: 'CRE généré', RIE: 'RIE généré', NOTE: 'Note générée', RFM: 'RFM généré', AUDIENCE: 'Rapport généré', RAP72315: 'Rapport 723-15 généré' };
+  return labels[currentType] || 'Document généré';
+}
+
+// ─── COPIER ───────────────────────────────────────────────────────────────────
+function copier() {
+  const text = document.getElementById('result-box').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-copy');
+    btn.textContent = '✓ Copié';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copier'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ─── RESET ────────────────────────────────────────────────────────────────────
+function reset() {
+  document.getElementById('transcription').value = '';
+  document.getElementById('contexte').value = '';
+  document.getElementById('result-box').textContent = '';
+  document.getElementById('right-panel').style.display = 'none';
+  document.getElementById('btn-reset').style.display = 'none';
+  document.getElementById('main-grid').classList.remove('two-col');
+  document.getElementById('previews').innerHTML = '';
+  document.getElementById('btn-extract').style.display = 'none';
+  photos = [];
+  hideError();
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('transcription').classList.add('error');
+}
+
+function hideError() {
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('transcription').classList.remove('error');
+}
+</script>
+</body>
+</html>
